@@ -35,15 +35,16 @@ exports.handler = async (event) => {
 
     } catch (error) {
         // Xəta baş verdikdə
+        console.error('Proxy xətası:', error);
         return {
             statusCode: 500,
             headers: {
                 'Access-Control-Allow-Origin': '*',
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ 
-                status: 'error', 
-                message: error.message || 'Daxili server xətası' 
+            body: JSON.stringify({
+                status: 'error',
+                message: error.message || 'Daxili server xətası'
             })
         };
     }
