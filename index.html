@@ -173,18 +173,27 @@
         .footer i {
             color: #6C5CE7;
         }
-        .cors-notice {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
+        .alias-testing {
+            background: #e8f0fe;
+            border: 1px solid #6C5CE7;
             border-radius: 12px;
             padding: 12px 16px;
             margin-top: 16px;
             font-size: 13px;
-            color: #856404;
+            color: #2d3436;
             display: none;
         }
-        .cors-notice i {
+        .alias-testing i {
+            color: #6C5CE7;
             margin-right: 6px;
+        }
+        .alias-testing .success {
+            color: #00CEC9;
+            font-weight: 600;
+        }
+        .alias-testing .error {
+            color: #e74c3c;
+            font-weight: 600;
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
@@ -203,6 +212,9 @@
                 <select id="xidmet" required>
                     <option value="azerigaz_ehali">Azəriqaz (Əhali)</option>
                     <option value="azerishiq_ehali" selected>Azərişiq (Əhali)</option>
+                    <option value="azerishiq">Azərişiq (Alias Test)</option>
+                    <option value="azerishiq_ahali">Azərişiq (Ahali Test)</option>
+                    <option value="azerişiq">Azərişiq (Türk Hərfləri)</option>
                     <option value="azeristilik_ehali">Azəristilik</option>
                     <option value="azersu_ehali">ADSEA - Azersu (Əhali)</option>
                 </select>
@@ -223,9 +235,9 @@
             </button>
         </form>
 
-        <div class="cors-notice" id="corsNotice">
-            <i class="fas fa-exclamation-triangle"></i>
-            CORS xətası alırsınızsa, brauzerə <strong>"CORS Unblock"</strong> plaginini əlavə edin.
+        <div class="alias-testing" id="aliasTesting">
+            <i class="fas fa-flask"></i>
+            <span id="aliasStatus">Alias sınaqları aparılır...</span>
         </div>
 
         <div class="result-box" id="resultBox">
@@ -240,22 +252,107 @@
     </div>
 
     <script>
+        // Bütün alias dəyərləri
+        const ALIAS_LIST = [
+            'azerishiq_ehali',
+            'azerishiq',
+            'azerishiq_ahali',
+            'azerişiq',
+            'azerigaz_ehali',
+            'azeristilik_ehali',
+            'azersu_ehali'
+        ];
+
+        let foundAlias = null;
+        let isTesting = false;
+
         document.getElementById('checkBtn').addEventListener('click', async function() {
-            const xidmet = document.getElementById('xidmet').value;
             const subscriberId = document.getElementById('subscriberId').value.trim();
+            const selectedAlias = document.getElementById('xidmet').value;
 
             if (!subscriberId) {
                 alert('Zəhmət olmasa, abonent kodunu daxil edin!');
                 return;
             }
 
-            document.getElementById('spinner').classList.add('active');
+            // Əgər seçilmiş alias varsa, onu sına
+            if (selectedAlias && selectedAlias !== '') {
+                await testAlias(subscriberId, selectedAlias);
+                return;
+            }
+
+            // Əks halda bütün alias-ları sına
+            await testAllAliases(subscriberId);
+        });
+
+        async function testAllAliases(subscriberId) {
+            isTesting = true;
             document.getElementById('checkBtn').disabled = true;
+            document.getElementById('spinner').classList.add('active');
             document.getElementById('resultBox').classList.remove('active', 'success', 'error');
-            document.getElementById('corsNotice').style.display = 'none';
+            document.getElementById('aliasTesting').style.display = 'block';
+
+            const aliasStatus = document.getElementById('aliasStatus');
+            foundAlias = null;
+
+            for (let i = 0; i < ALIAS_LIST.length; i++) {
+                const alias = ALIAS_LIST[i];
+                aliasStatus.innerHTML = `Sınaq ${i+1}/${ALIAS_LIST.length}: <strong>${alias}</strong> ...`;
+
+                try {
+                    const response = await fetch('/.netlify/functions/proxy', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            subscriberId: subscriberId,
+                            payment_type: "2",
+                            alias: alias,
+                            lang: "az",
+                            amount: null,
+                            binding: 0,
+                            agree: false,
+                            rrn: generateRRN()
+                        })
+                    });
+
+                    const cavab = await response.json();
+
+                    if (cavab.status === 'success' && cavab.data) {
+                        foundAlias = alias;
+                        aliasStatus.innerHTML = `✅ <span class="success">İŞLƏDİ!</span> Alias: <strong>${alias}</strong>`;
+                        showResult(cavab, alias);
+                        break;
+                    } else {
+                        aliasStatus.innerHTML = `❌ <span class="error">İşləmədi</span> - ${alias}: ${cavab.message || 'Xəta'}`;
+                    }
+
+                } catch (error) {
+                    aliasStatus.innerHTML = `❌ <span class="error">Xəta</span> - ${alias}: Şəbəkə problemi`;
+                }
+
+                // Hər sınaq arasında qısa gözləmə
+                await new Promise(r => setTimeout(r, 300));
+            }
+
+            if (!foundAlias) {
+                aliasStatus.innerHTML = `❌ <span class="error">Heç bir alias işləmədi!</span> Zəhmət olmasa, doğru alias-ı əl ilə seçin.`;
+            }
+
+            document.getElementById('spinner').classList.remove('active');
+            document.getElementById('checkBtn').disabled = false;
+            isTesting = false;
+        }
+
+        async function testAlias(subscriberId, alias) {
+            document.getElementById('checkBtn').disabled = true;
+            document.getElementById('spinner').classList.add('active');
+            document.getElementById('resultBox').classList.remove('active', 'success', 'error');
+            document.getElementById('aliasTesting').style.display = 'block';
+            document.getElementById('aliasStatus').innerHTML = `Sınaq: <strong>${alias}</strong> ...`;
 
             try {
-                // 🔥 BURASI VACİB: Netlify funksiyasına yönləndir!
                 const response = await fetch('/.netlify/functions/proxy', {
                     method: 'POST',
                     headers: {
@@ -264,7 +361,7 @@
                     body: JSON.stringify({
                         subscriberId: subscriberId,
                         payment_type: "2",
-                        alias: xidmet,
+                        alias: alias,
                         lang: "az",
                         amount: null,
                         binding: 0,
@@ -275,66 +372,59 @@
 
                 const cavab = await response.json();
 
-                document.getElementById('spinner').classList.remove('active');
-                document.getElementById('checkBtn').disabled = false;
-
-                const resultBox = document.getElementById('resultBox');
-                const resultContent = document.getElementById('resultContent');
-                const resultTitle = document.getElementById('resultTitle');
-
                 if (cavab.status === 'success' && cavab.data) {
-                    resultBox.className = 'result-box active success';
-                    resultTitle.innerHTML = '<i class="fas fa-check-circle" style="color:#00CEC9;"></i> Məlumatlar tapıldı!';
-
-                    const data = cavab.data;
-                    let html = '';
-                    if (data.name) html +=
-                        `<div class="data-row"><strong>Ad:</strong> <span>${data.name}</span></div>`;
-                    if (data.balance) html +=
-                        `<div class="data-row"><strong>Balans:</strong> <span>${data.balance} AZN</span></div>`;
-                    if (data.operator) html +=
-                        `<div class="data-row"><strong>Operator:</strong> <span>${data.operator}</span></div>`;
-                    if (data.address) html +=
-                        `<div class="data-row"><strong>Ünvan:</strong> <span>${data.address}</span></div>`;
-                    if (data.tariff) html +=
-                        `<div class="data-row"><strong>Tarif:</strong> <span>${data.tariff}</span></div>`;
-                    if (data.end_time) html +=
-                        `<div class="data-row"><strong>Bitmə vaxtı:</strong> <span>${data.end_time}</span></div>`;
-                    if (data.total_debt) html +=
-                        `<div class="data-row"><strong>Ümumi borc:</strong> <span>${data.total_debt} AZN</span></div>`;
-                    if (data.subscriber) html +=
-                        `<div class="data-row"><strong>Abonent:</strong> <span>${data.subscriber}</span></div>`;
-
-                    if (!html) {
-                        html = `<div class="data-row"><span>Məlumat tapılmadı.</span></div>`;
-                    }
-                    resultContent.innerHTML = html;
-
+                    document.getElementById('aliasStatus').innerHTML = `✅ <span class="success">İŞLƏDİ!</span> Alias: <strong>${alias}</strong>`;
+                    showResult(cavab, alias);
                 } else {
-                    resultBox.className = 'result-box active error';
-                    resultTitle.innerHTML = '<i class="fas fa-exclamation-circle" style="color:#e74c3c;"></i> Xəta!';
-                    resultContent.innerHTML = `
-                            <div class="data-row"><span>${cavab.message || 'Abonent kodu səhvdir və ya tapılmadı.'}</span></div>
-                        `;
+                    document.getElementById('aliasStatus').innerHTML = `❌ <span class="error">İşləmədi</span> - ${cavab.message || 'Xəta'}`;
+                    showError(cavab.message || 'Abonent kodu səhvdir və ya tapılmadı.');
                 }
 
             } catch (error) {
-                document.getElementById('spinner').classList.remove('active');
-                document.getElementById('checkBtn').disabled = false;
-
-                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                    document.getElementById('corsNotice').style.display = 'block';
-                }
-
-                const resultBox = document.getElementById('resultBox');
-                resultBox.className = 'result-box active error';
-                resultTitle.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#e74c3c;"></i> Şəbəkə xətası!';
-                resultContent.innerHTML = `
-                        <div class="data-row"><span>Serverə qoşulmaq mümkün olmadı.</span></div>
-                    `;
-                console.error('Xəta:', error);
+                document.getElementById('aliasStatus').innerHTML = `❌ <span class="error">Şəbəkə xətası!</span>`;
+                showError('Serverə qoşulmaq mümkün olmadı.');
             }
-        });
+
+            document.getElementById('spinner').classList.remove('active');
+            document.getElementById('checkBtn').disabled = false;
+        }
+
+        function showResult(cavab, alias) {
+            const resultBox = document.getElementById('resultBox');
+            const resultContent = document.getElementById('resultContent');
+            const resultTitle = document.getElementById('resultTitle');
+
+            resultBox.className = 'result-box active success';
+            resultTitle.innerHTML = `✅ Məlumatlar tapıldı! (Alias: ${alias})`;
+
+            const data = cavab.data;
+            let html = '';
+            if (data.name) html += `<div class="data-row"><strong>Ad:</strong> <span>${data.name}</span></div>`;
+            if (data.balance) html += `<div class="data-row"><strong>Balans:</strong> <span>${data.balance} AZN</span></div>`;
+            if (data.operator) html += `<div class="data-row"><strong>Operator:</strong> <span>${data.operator}</span></div>`;
+            if (data.address) html += `<div class="data-row"><strong>Ünvan:</strong> <span>${data.address}</span></div>`;
+            if (data.tariff) html += `<div class="data-row"><strong>Tarif:</strong> <span>${data.tariff}</span></div>`;
+            if (data.end_time) html += `<div class="data-row"><strong>Bitmə vaxtı:</strong> <span>${data.end_time}</span></div>`;
+            if (data.total_debt) html += `<div class="data-row"><strong>Ümumi borc:</strong> <span>${data.total_debt} AZN</span></div>`;
+            if (data.subscriber) html += `<div class="data-row"><strong>Abonent:</strong> <span>${data.subscriber}</span></div>`;
+
+            if (!html) {
+                html = `<div class="data-row"><span>Məlumat tapılmadı.</span></div>`;
+            }
+            resultContent.innerHTML = html;
+        }
+
+        function showError(message) {
+            const resultBox = document.getElementById('resultBox');
+            const resultContent = document.getElementById('resultContent');
+            const resultTitle = document.getElementById('resultTitle');
+
+            resultBox.className = 'result-box active error';
+            resultTitle.innerHTML = '❌ Xəta!';
+            resultContent.innerHTML = `
+                <div class="data-row"><span>${message}</span></div>
+            `;
+        }
 
         function generateRRN() {
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
