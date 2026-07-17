@@ -1,5 +1,6 @@
 // Netlify Serverless Function - Proxy
 exports.handler = async (event) => {
+    // Yalnız POST sorğularını qəbul et
     if (event.httpMethod !== 'POST') {
         return {
             statusCode: 405,
@@ -8,8 +9,10 @@ exports.handler = async (event) => {
     }
 
     try {
+        // İstifadəçidən gələn məlumatları al
         const data = JSON.parse(event.body);
 
+        // Portmanat API-yə sorğu göndər
         const response = await fetch('https://portmanat.az/transactions/update-payment', {
             method: 'POST',
             headers: {
@@ -20,6 +23,7 @@ exports.handler = async (event) => {
 
         const cavab = await response.json();
 
+        // Cavabı qaytar
         return {
             statusCode: 200,
             headers: {
@@ -30,9 +34,17 @@ exports.handler = async (event) => {
         };
 
     } catch (error) {
+        // Xəta baş verdikdə
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: error.message })
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                status: 'error', 
+                message: error.message || 'Daxili server xətası' 
+            })
         };
     }
 };
