@@ -211,10 +211,7 @@
                 <label><i class="fas fa-building"></i> Xidmət</label>
                 <select id="xidmet" required>
                     <option value="azerigaz_ehali">Azəriqaz (Əhali)</option>
-                    <option value="azerishiq_ehali" selected>Azərişiq (Əhali)</option>
-                    <option value="azerishiq">Azərişiq (Alias Test)</option>
-                    <option value="azerishiq_ahali">Azərişiq (Ahali Test)</option>
-                    <option value="azerişiq">Azərişiq (Türk Hərfləri)</option>
+                    <option value="azerishiq_e" selected>Azərişiq (Əhali)</option>
                     <option value="azeristilik_ehali">Azəristilik</option>
                     <option value="azersu_ehali">ADSEA - Azersu (Əhali)</option>
                 </select>
@@ -254,13 +251,10 @@
     <script>
         // Bütün alias dəyərləri
         const ALIAS_LIST = [
+            'azerishiq_e',
             'azerishiq_ehali',
             'azerishiq',
-            'azerishiq_ahali',
-            'azerişiq',
-            'azerigaz_ehali',
-            'azeristilik_ehali',
-            'azersu_ehali'
+            'azerishiq_ahali'
         ];
 
         let foundAlias = null;
