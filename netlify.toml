@@ -1,22 +1,2 @@
-
-# 2. proxy.js faylını aç və yuxarıdakı kodla əvəz et
-nano netlify/functions/proxy.js
-
-# 3. index.html faylını aç və yuxarıdakı kodla əvəz et
-nano index.html
-
-# 4. GitHub-a yüklə
-git add .
-git commit -m "Bütün fayllar yeniləndi"
-git push
-# 2. proxy.js faylını aç və yuxarıdakı kodla əvəz et
-nano netlify/functions/proxy.js
-
-# 3. index.html faylını aç və yuxarıdakı kodla əvəz et
-nano index.html
-
-# 4. GitHub-a yüklə
-git add .
-git commit -m "Bütün fayllar yeniləndi"
-git push[build]
+[build]
   functions = "netlify/functions"
