@@ -1,4 +1,3 @@
-// Netlify Serverless Function - Proxy
 exports.handler = async (event) => {
     // Yalnız POST sorğularını qəbul et
     if (event.httpMethod !== 'POST') {
@@ -35,7 +34,6 @@ exports.handler = async (event) => {
 
     } catch (error) {
         // Xəta baş verdikdə
-        console.error('Proxy xətası:', error);
         return {
             statusCode: 500,
             headers: {
