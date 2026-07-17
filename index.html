@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kommunal - Abonent Yoxlama</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f0f2f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 32px 28px;
+            max-width: 520px;
+            width: 100%;
+            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.15);
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .logo h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6C5CE7, #00CEC9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .logo p {
+            color: #636e72;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+            color: #2d3436;
+            margin-bottom: 6px;
+        }
+        .form-group label i {
+            color: #6C5CE7;
+            margin-right: 6px;
+        }
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e9ecf3;
+            border-radius: 14px;
+            font-size: 16px;
+            background: #fafbfc;
+            transition: all 0.3s;
+        }
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #6C5CE7;
+            box-shadow: 0 0 0 4px rgba(108, 92, 231, 0.12);
+            background: white;
+        }
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            background: linear-gradient(135deg, #6C5CE7, #00CEC9);
+            color: white;
+            box-shadow: 0 8px 24px rgba(108, 92, 231, 0.25);
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            transform: scale(1.02);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .result-box {
+            margin-top: 24px;
+            padding: 20px;
+            border-radius: 16px;
+            background: #f8f9fc;
+            border: 1px solid #e9ecf3;
+            display: none;
+        }
+        .result-box.active {
+            display: block;
+            animation: fadeUp 0.4s ease;
+        }
+        .result-box.success {
+            border-left: 5px solid #00CEC9;
+        }
+        .result-box.error {
+            border-left: 5px solid #e74c3c;
+        }
+        .result-box h3 {
+            font-size: 18px;
+            margin-bottom: 12px;
+        }
+        .result-box .data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed #e9ecf3;
+            font-size: 15px;
+        }
+        .result-box .data-row:last-child {
+            border-bottom: none;
+        }
+        .result-box .data-row strong {
+            color: #2d3436;
+        }
+        .result-box .data-row span {
+            color: #636e72;
+            font-weight: 500;
+        }
+        .spinner {
+            display: none;
+            text-align: center;
+            margin-top: 16px;
+        }
+        .spinner.active {
+            display: block;
+        }
+        .spinner i {
+            font-size: 32px;
+            color: #6C5CE7;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        @keyframes fadeUp {
+            0% {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #b2bec3;
+        }
+        .footer i {
+            color: #6C5CE7;
+        }
+        .cors-notice {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-top: 16px;
+            font-size: 13px;
+            color: #856404;
+            display: none;
+        }
+        .cors-notice i {
+            margin-right: 6px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+</head>
+<body>
+
+    <div class="container">
+        <div class="logo">
+            <h1><i class="fas fa-home"></i> Kommunal</h1>
+            <p>Abonent məlumatlarını yoxla</p>
+        </div>
+
+        <form id="abonentForm" onsubmit="return false;">
+            <div class="form-group">
+                <label><i class="fas fa-building"></i> Xidmət</label>
+                <select id="xidmet" required>
+                    <option value="azerigaz_ehali">Azəriqaz (Əhali)</option>
+                    <option value="azerishiq_ehali" selected>Azərişiq (Əhali)</option>
+                    <option value="azeristilik_ehali">Azəristilik</option>
+                    <option value="azersu_ehali">ADSEA - Azersu (Əhali)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label><i class="fas fa-user-tag"></i> Abonent kodu</label>
+                <input type="text" id="subscriberId" placeholder="Məsələn: 091200400030142" required />
+                <small style="color:#636e72;font-size:12px;display:block;margin-top:4px;">Azərişiq abonent nömrəsi</small>
+            </div>
+
+            <div class="spinner" id="spinner">
+                <i class="fas fa-spinner"></i>
+            </div>
+
+            <button type="button" class="btn" id="checkBtn">
+                <i class="fas fa-search"></i> Yoxla
+            </button>
+        </form>
+
+        <div class="cors-notice" id="corsNotice">
+            <i class="fas fa-exclamation-triangle"></i>
+            CORS xətası alırsınızsa, brauzerə <strong>"CORS Unblock"</strong> plaginini əlavə edin.
+        </div>
+
+        <div class="result-box" id="resultBox">
+            <h3 id="resultTitle"><i class="fas fa-user"></i> Məlumatlar</h3>
+            <div id="resultContent"></div>
+        </div>
+
+        <div class="footer">
+            <p><i class="fas fa-shield-alt"></i> Məlumatlar Portmanat API-dən gəlir</p>
+            <p>© 2026 - Test məqsədi ilə</p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('checkBtn').addEventListener('click', async function() {
+            const xidmet = document.getElementById('xidmet').value;
+            const subscriberId = document.getElementById('subscriberId').value.trim();
+
+            if (!subscriberId) {
+                alert('Zəhmət olmasa, abonent kodunu daxil edin!');
+                return;
+            }
+
+            document.getElementById('spinner').classList.add('active');
+            document.getElementById('checkBtn').disabled = true;
+            document.getElementById('resultBox').classList.remove('active', 'success', 'error');
+            document.getElementById('corsNotice').style.display = 'none';
+
+            try {
+                // 🔥 BURASI VACİB: Netlify funksiyasına yönləndir!
+                const response = await fetch('/.netlify/functions/proxy', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        subscriberId: subscriberId,
+                        payment_type: "2",
+                        alias: xidmet,
+                        lang: "az",
+                        amount: null,
+                        binding: 0,
+                        agree: false,
+                        rrn: generateRRN()
+                    })
+                });
+
+                const cavab = await response.json();
+
+                document.getElementById('spinner').classList.remove('active');
+                document.getElementById('checkBtn').disabled = false;
+
+                const resultBox = document.getElementById('resultBox');
+                const resultContent = document.getElementById('resultContent');
+                const resultTitle = document.getElementById('resultTitle');
+
+                if (cavab.status === 'success' && cavab.data) {
+                    resultBox.className = 'result-box active success';
+                    resultTitle.innerHTML = '<i class="fas fa-check-circle" style="color:#00CEC9;"></i> Məlumatlar tapıldı!';
+
+                    const data = cavab.data;
+                    let html = '';
+                    if (data.name) html +=
+                        `<div class="data-row"><strong>Ad:</strong> <span>${data.name}</span></div>`;
+                    if (data.balance) html +=
+                        `<div class="data-row"><strong>Balans:</strong> <span>${data.balance} AZN</span></div>`;
+                    if (data.operator) html +=
+                        `<div class="data-row"><strong>Operator:</strong> <span>${data.operator}</span></div>`;
+                    if (data.address) html +=
+                        `<div class="data-row"><strong>Ünvan:</strong> <span>${data.address}</span></div>`;
+                    if (data.tariff) html +=
+                        `<div class="data-row"><strong>Tarif:</strong> <span>${data.tariff}</span></div>`;
+                    if (data.end_time) html +=
+                        `<div class="data-row"><strong>Bitmə vaxtı:</strong> <span>${data.end_time}</span></div>`;
+                    if (data.total_debt) html +=
+                        `<div class="data-row"><strong>Ümumi borc:</strong> <span>${data.total_debt} AZN</span></div>`;
+                    if (data.subscriber) html +=
+                        `<div class="data-row"><strong>Abonent:</strong> <span>${data.subscriber}</span></div>`;
+
+                    if (!html) {
+                        html = `<div class="data-row"><span>Məlumat tapılmadı.</span></div>`;
+                    }
+                    resultContent.innerHTML = html;
+
+                } else {
+                    resultBox.className = 'result-box active error';
+                    resultTitle.innerHTML = '<i class="fas fa-exclamation-circle" style="color:#e74c3c;"></i> Xəta!';
+                    resultContent.innerHTML = `
+                            <div class="data-row"><span>${cavab.message || 'Abonent kodu səhvdir və ya tapılmadı.'}</span></div>
+                        `;
+                }
+
+            } catch (error) {
+                document.getElementById('spinner').classList.remove('active');
+                document.getElementById('checkBtn').disabled = false;
+
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    document.getElementById('corsNotice').style.display = 'block';
+                }
+
+                const resultBox = document.getElementById('resultBox');
+                resultBox.className = 'result-box active error';
+                resultTitle.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#e74c3c;"></i> Şəbəkə xətası!';
+                resultContent.innerHTML = `
+                        <div class="data-row"><span>Serverə qoşulmaq mümkün olmadı.</span></div>
+                    `;
+                console.error('Xəta:', error);
+            }
+        });
+
+        function generateRRN() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0;
+                var v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        document.getElementById('subscriberId').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('checkBtn').click();
+            }
+        });
+    </script>
+
+</body>
+</html>
